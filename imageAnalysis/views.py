@@ -1,5 +1,6 @@
 from rest_framework.views import APIView
 import base64
+
 from wordServer.utils import R
 
 
@@ -19,5 +20,5 @@ class Analysis(APIView):
         # 将图片数据转换为bytes类型
         imageData = base64.b64decode(imageData)
         # 进行图片分析
-
+        imageAnalysis = ImageAnalysis()
         return R.ok(data=data, msg='操作成功')
