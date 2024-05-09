@@ -5,7 +5,9 @@ from keras.src.losses import cosine_similarity
 from keras.preprocessing import image
 
 
+# 图片预处理
 def ImagePreprocessing(imageData):
+    imageData = np.array(imageData)
     gray = cv2.cvtColor(imageData, cv2.COLOR_BGR2GRAY)
     # 通过阈值处理将汉字背景变为白色
     ret, thresh = cv2.threshold(gray, 60, 255, cv2.THRESH_BINARY_INV)  # 大于阈值时置 0(黑)，否则置 255（白）
@@ -47,7 +49,10 @@ def SkeletonSimilarityEvaluation(imageData1, imageData2):
     vector1 = np.array(extract_features(imageData1)).reshape(1, 25088)
     vector2 = np.array(extract_features(imageData2)).reshape(1, 25088)
     normalized_distance = cosine_similarity(vector1, vector2)
-    return normalized_distance
+    # 转换 Tensor 为 numpy 数组并访问第一个元素
+    value = normalized_distance.numpy()[0]
+    print(value)
+    return value.item()
 
 
 # 笔画提取及相似度评价
@@ -89,9 +94,13 @@ def StrokeExtractionAndSimilarityEvaluation(imageData, reference_image):
 
 # 章法布局相似度及评价
 def LayoutSimilarityEvaluation(imageData, reference_image):
+    # 转换为灰度图像
+    img1 = cv2.cvtColor(imageData, cv2.COLOR_BGR2GRAY)
+    img2 = cv2.cvtColor(reference_image, cv2.COLOR_BGR2GRAY)
+
     # 将图像转换为二值图像
-    _, img1_binary = cv2.threshold(imageData, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
-    _, img2_binary = cv2.threshold(reference_image, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    _, img1_binary = cv2.threshold(img1, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
+    _, img2_binary = cv2.threshold(img2, 0, 255, cv2.THRESH_BINARY + cv2.THRESH_OTSU)
 
     # 计算图像中的轮廓
     contours1, _ = cv2.findContours(img1_binary, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
@@ -156,47 +165,50 @@ def ImageAnalysis(imageData):
 # -----------------------------骨架提取--------------------------------
 
 def VThin(image, array):
-    h = image.shape[0]
-    w = image.shape[1]
+    h, w, _ = image.shape  # 图像高度和宽度
     NEXT = 1
     for i in range(h):
         for j in range(w):
             if NEXT == 0:
                 NEXT = 1
             else:
-                M = image[i, j - 1] + image[i, j] + image[i, j + 1] if 0 < j < w - 1 else 1
+                # 边界条件处理，确保不会越界
+                M = (image[i, j - 1] + image[i, j] + image[i, j + 1]) if 0 < j < w - 1 else 1
                 if image[i, j] == 0 and M != 0:
                     a = [0] * 9
+                    # 填充数组a，检查周围的像素
                     for k in range(3):
                         for l in range(3):
-                            if -1 < (i - 1 + k) < h and -1 < (j - 1 + l) < w and image[i - 1 + k, j - 1 + l] == 255:
+                            ii, jj = i - 1 + k, j - 1 + l
+                            if 0 <= ii < h and 0 <= jj < w and image[ii, jj] == 255:
                                 a[k * 3 + l] = 1
-                    sum = a[0] * 1 + a[1] * 2 + a[2] * 4 + a[3] * 8 + a[5] * 16 + a[6] * 32 + a[7] * 64 + a[8] * 128
-                    image[i, j] = array[sum] * 255
-                    if array[sum] == 1:
+                    # 计算sum用于查表决定新的像素值
+                    sum_val = a[0] * 1 + a[1] * 2 + a[2] * 4 + a[3] * 8 + a[5] * 16 + a[6] * 32 + a[7] * 64 + a[8] * 128
+                    image[i, j] = array[sum_val] * 255
+                    if array[sum_val] == 1:
                         NEXT = 0
     return image
 
 
 def HThin(image, array):
-    h = image.shape[0]
-    w = image.shape[1]
+    h, w, _ = image.shape  # 图像高度和宽度
     NEXT = 1
-    for j in range(h):
-        for i in range(w):
+    for j in range(h):  # 遍历所有行
+        for i in range(w):  # 遍历所有列
             if NEXT == 0:
                 NEXT = 1
             else:
-                M = image[i - 1, j] + image[i, j] + image[i + 1, j] if 0 < i < h - 1 else 1
-                if image[i, j] == 0 and M != 0:
+                M = (image[j, i - 1] + image[j, i] + image[j, i + 1]) if 0 < i < w - 1 else 1
+                if image[j, i] == 0 and M != 0:
                     a = [0] * 9
                     for k in range(3):
                         for l in range(3):
-                            if -1 < (i - 1 + k) < h and -1 < (j - 1 + l) < w and image[i - 1 + k, j - 1 + l] == 255:
+                            ii, jj = j - 1 + k, i - 1 + l
+                            if 0 <= ii < h and 0 <= jj < w and image[ii, jj] == 255:
                                 a[k * 3 + l] = 1
-                    sum = a[0] * 1 + a[1] * 2 + a[2] * 4 + a[3] * 8 + a[5] * 16 + a[6] * 32 + a[7] * 64 + a[8] * 128
-                    image[i, j] = array[sum] * 255
-                    if array[sum] == 1:
+                    sum_val = a[0] * 1 + a[1] * 2 + a[2] * 4 + a[3] * 8 + a[5] * 16 + a[6] * 32 + a[7] * 64 + a[8] * 128
+                    image[j, i] = array[sum_val] * 255
+                    if array[sum_val] == 1:
                         NEXT = 0
     return image
 
@@ -204,7 +216,7 @@ def HThin(image, array):
 def Xihua(image, array, num=20):
     h = image.shape[0]
     w = image.shape[1]
-    iXihua = np.zeros((w, h, 1), dtype=np.uint8)
+    iXihua = np.zeros((h, w, 1), dtype=np.uint8)
     np.copyto(iXihua, image)
     for i in range(num):
         VThin(iXihua, array)
@@ -216,7 +228,7 @@ def Two(image):
     h = image.shape[0]
     w = image.shape[1]
 
-    iTwo = np.zeros((w, h, 1), dtype=np.uint8)
+    iTwo = np.zeros((h, w, 1), dtype=np.uint8)
     for i in range(h):
         for j in range(w):
             iTwo[i, j] = 0 if image[i, j] < 200 else 255
@@ -224,9 +236,6 @@ def Two(image):
 
 
 # -----------------------------相似度评价--------------------------------
-
-model = VGG16(weights='imagenet', include_top=False)
-
 
 # 加载图片并预处理
 def load_and_process_image(imageData):
@@ -237,8 +246,9 @@ def load_and_process_image(imageData):
 
 
 # 提取特征
-def extract_features(img_path):
-    img_tensor = load_and_process_image(img_path)
+def extract_features(imageData):
+    model = VGG16(weights='imagenet', include_top=False)
+    img_tensor = load_and_process_image(imageData)
     features = model.predict(img_tensor)
     # 将特征扁平化为一维数组
     flattened_features = features.flatten()
