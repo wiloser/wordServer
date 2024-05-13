@@ -44,6 +44,7 @@ def ImageSkeletonExtraction(imageData):
 
 
 # 骨架相似度评价
+# todo:高
 def SkeletonSimilarityEvaluation(imageData1, imageData2):
     # 提取特征向量,利用余弦进行相似度计算
     vector1 = np.array(extract_features(imageData1)).reshape(1, 25088)
