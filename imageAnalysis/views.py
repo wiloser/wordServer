@@ -58,3 +58,13 @@ class Analysis(APIView):
             },
             msg='操作成功',
         )
+
+
+class GetImages(APIView):
+    def get(self, request):
+        return R.ok(
+            data={
+                'words': ['王', '李', '张', ],
+            },
+            msg='操作成功',
+        )
