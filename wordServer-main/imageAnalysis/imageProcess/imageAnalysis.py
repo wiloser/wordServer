@@ -196,7 +196,6 @@ def LayoutSimilarityEvaluation(imageData, reference_image):
         print(description)
         return average_similarity , description
 
-# todo
 def ImageAnalysis(imageData):
     # 进行图片分析
     return {
