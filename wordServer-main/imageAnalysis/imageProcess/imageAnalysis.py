@@ -1,7 +1,6 @@
 import cv2
 import numpy as np
 from keras.src.applications.vgg16 import VGG16, preprocess_input
-from keras.src.losses import cosine_similarity
 from keras.preprocessing import image
 from sklearn.metrics import euclidean_distances
 
@@ -257,7 +256,7 @@ def HThin(imageData, array):
     return image
 
 
-def Xihua(imageData, array, num=20):
+def Xihua(imageData, array, num=30):
     h = imageData.shape[0]
     w = imageData.shape[1]
     iXihua = np.zeros((h, w, 1), dtype=np.uint8)
@@ -352,38 +351,42 @@ def Contour_extraction(imageData):
 
 # -----------------------------高好晴check--------------------------------
 #模板字和手写字读取
-template_img_path  = r'E:\\python_files\\pytorch\\myself\\Handcopied_pictures\\1.png'
-handwriting_img = r'E:\\python_files\\pytorch\\myself\\Handcopied_pictures\\4.png'
-
-handwriting_img =  cv2.imread(handwriting_img)
-template_img =  cv2.imread(template_img_path)
+handwriting_img =  cv2.imread('1.png')
+template_img =  cv2.imread('4.png')
 
 #图片预处理，使用image_preprocessing函数
 image1 = ImagePreprocessing(handwriting_img)
 image2 = ImagePreprocessing(template_img)
+# cv2.imshow('1',image1)
+# cv2.imshow('2',image2)
+# cv2.waitKey(0)
+# cv2.destroyAllWindows()
+
 
 #预处理之后进行细化处理
 xihuaimage1 = ImageSkeletonExtraction(image1)
 xihuaimage2 = ImageSkeletonExtraction(image2)
-# cv2.imshow('1',xihuaimage1)
-# cv2.imshow('2',xihuaimage2)
-# cv2.destroyAllWindows()
+cv2.imshow('1',xihuaimage1)
+cv2.imshow('2',xihuaimage2)
+cv2.waitKey(0)
+cv2.destroyAllWindows()
 
-#骨架相似度评价
-Skeleton_score = SkeletonSimilarityEvaluation(xihuaimage1, xihuaimage2)
+# #骨架相似度评价
+#
+# #笔画相似度评价
+#
+# #章法布局相似度及评价
+# img_contour1 = Contour_extraction(image1)
+# img_contour2 = Contour_extraction(image2)
+#
+# #整体评价
+# skeleton_score, _ = SkeletonSimilarityEvaluation(xihuaimage1, xihuaimage2)
+# stroke_score, _ = StrokeExtractionAndSimilarityEvaluation(xihuaimage1, xihuaimage2)
+# layout_score, _ = LayoutSimilarityEvaluation(img_contour1, img_contour2)
+#
+# # 计算总分
+# full_score = skeleton_score * 0.5 + stroke_score * 0.45 + layout_score * 0.05
+# print("总分：", full_score)
 
-#笔画相似度评价
-weighted_score = StrokeExtractionAndSimilarityEvaluation(xihuaimage1, xihuaimage2)
 
-#章法布局相似度及评价
-img_contour1 = Contour_extraction(image1)
-img_contour2 = Contour_extraction(image2)
-
-#整体评价
-skeleton_score, _ = SkeletonSimilarityEvaluation(xihuaimage1, xihuaimage2)
-stroke_score, _ = StrokeExtractionAndSimilarityEvaluation(xihuaimage1, xihuaimage2)
-layout_score, _ = LayoutSimilarityEvaluation(img_contour1, img_contour2)
-
-# 计算总分
-full_score = skeleton_score * 0.5 + stroke_score * 0.2 + layout_score * 0.3
-print("总分：", full_score)
+# -----------------------------check    check  git--------------------------------
