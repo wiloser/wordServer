@@ -1,7 +1,6 @@
 #encoding=utf-8
 import cv2
 import numpy as np
-import time
 import os.path
 
 # 初始化类 Pen 的对象属性。
@@ -56,23 +55,41 @@ class Pen:
             self.f.write(add_point)
             print('下一笔')
 
-    #将图像初始化为白色背景
+    #将图像初始化为白色背景并添加米字格
     def init_write(self):
         self.img = np.zeros((self.width, self.height, self.channles), np.uint8)
         self.img.fill(255)
+        self.draw_mizige()
 
-    #打开下一个汉字对应的文件以写入模式保存笔画数据
+    # 绘制米字格
+    def draw_mizige(self):
+        color = (200, 200, 200)  # 米字格颜色
+        thickness = 1  # 线条粗细
+        w, h = self.width, self.height
+
+        # 绘制外围边框
+        cv2.rectangle(self.img, (0, 0), (w-1, h-1), color, thickness)
+
+        # 绘制中心十字
+        cv2.line(self.img, (w // 2, 0), (w // 2, h), color, thickness)
+        cv2.line(self.img, (0, h // 2), (w, h // 2), color, thickness)
+
+        # 绘制对角线
+        cv2.line(self.img, (0, 0), (w, h), color, thickness)
+        cv2.line(self.img, (w, 0), (0, h), color, thickness)
+
+    # 打开下一个汉字对应的文件以写入模式保存笔画数据
     def next_write(self):
         self.f = open(self.save_txt_dir + self.object_name[self.index] + self.object_type, "w")
 
-
-# 创建 Pen 类的实例 pen_main 并初始化。
-# 如果 flag 为 True，则初始化图像并设置窗口和鼠标回调函数。
-# 在循环中展示图像，监听按键操作：
-# q 键：关闭当前文件并退出程序。
-# c 键：清空当前画布并关闭当前文件。
-# n 键：关闭当前文件，重置画布，处理下一个字。
-# 当所有字都处理完毕时，退出程序并销毁窗口
+    # 创建 Pen 类的实例 pen_main 并初始化。
+    # 如果 flag 为 True，则初始化图像并设置窗口和鼠标回调函数。
+    # 在循环中展示图像，监听按键操作：
+    # q 键：关闭当前文件并退出程序。
+    # s 键：清空当前画布并关闭当前文件。
+    # n 键：关闭当前文件，重置画布，处理下一个字。
+    # 当所有字都处理完毕时，退出程序并销毁窗口
+    # 运行主程序
     def run(self):
         if self.flag:
             self.init_write()
@@ -85,7 +102,7 @@ class Pen:
                 if k == ord('q'):
                     self.f.close()
                     break
-                if k == ord('c'):
+                if k == ord('s'):
                     self.init_write()
                     self.f.close()
                 if k == ord('n'):
@@ -101,5 +118,5 @@ class Pen:
             cv2.destroyAllWindows()
 
 if __name__ == "__main__":
-   pen_main = Pen()
-   pen_main.run()
+    pen_main = Pen()
+    pen_main.run()
